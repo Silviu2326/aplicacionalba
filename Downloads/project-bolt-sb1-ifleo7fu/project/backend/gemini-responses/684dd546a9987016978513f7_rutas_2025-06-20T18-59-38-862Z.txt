@@ -1,0 +1,26 @@
+Claro, aquí tienes el análisis del archivo y la generación de la estructura de rutas para Express, siguiendo todas las instrucciones especificadas.
+
+### Análisis de la API "Curso"
+
+1.  **`fetchCourse(id)`**: Esta función obtiene los datos de un curso. El `id` es un parámetro. Esto se traduce directamente a una ruta `GET /cursos/:id`. Se debe validar que el `id` proporcionado en la URL sea válido (p. ej., un número o un ID de formato específico como MongoID).
+
+2.  **`updateLessonStatus(lessonId, completed)`**: Esta función actualiza el estado de una lección específica. Esto es una operación de modificación parcial, lo que la hace ideal para un método `PATCH`. La ruta debe identificar tanto el curso como la lección para ser RESTful: `PATCH /cursos/:cursoId/lecciones/:leccionId`. El cuerpo de la solicitud (`body`) debería contener el nuevo estado, por ejemplo: `{ "completado": true }`. Se deben validar los IDs en la URL y el campo `completado` en el body.
+
+3.  **`fetchLessonContent(lessonId)`**: Esta función obtiene el contenido detallado de una lección específica. Es una operación de lectura (`GET`). Al igual que la actualización, la ruta RESTful más apropiada es `GET /cursos/:cursoId/lecciones/:leccionId`, ya que una lección pertenece a un curso. Se deben validar los IDs en la URL.
+
+### Estructura de Rutas Generada
+
+Basado en el análisis, se genera un único archivo de rutas que agrupa todos los endpoints relacionados con los cursos.
+
+```json
+{
+  "routes": [
+    {
+      "name": "CursoRoutes",
+      "fileName": "curso.routes.js",
+      "content": "const { Router } = require('express');\nconst { param, body, validationResult } = require('express-validator');\n\n// --- Controladores (simulados para el propósito de este archivo de rutas) ---\n// En una aplicación real, estos se importarían desde '../controllers/curso.controller.js'\nconst { \n  getCourseById, \n  getLessonDetails, \n  updateLessonStatus \n} = require('../controllers/curso.controller');\n\nconst router = Router();\n\n// --- Middleware de Validación ---\n// Middleware para manejar los errores de validación de express-validator\nconst handleValidationErrors = (req, res, next) => {\n  const errors = validationResult(req);\n  if (!errors.isEmpty()) {\n    // Si hay errores de validación, responde con un código 400 y los errores.\n    return res.status(400).json({ errors: errors.array() });\n  }\n  next();\n};\n\n// --- Definición de Rutas ---\n\n/**\n * @route   GET /api/cursos/:id\n * @desc    Obtener la información detallada de un curso específico.\n * @access  Public\n */\nrouter.get(\n  '/:id',\n  [\n    // Middleware de validación para el parámetro 'id'\n    param('id', 'El ID del curso proporcionado no es un ID válido.').isMongoId() // Se asume formato MongoID, puede cambiarse a isInt() si se usan IDs numéricos.\n  ],\n  handleValidationErrors, // Manejador de errores de validación\n  getCourseById // Llama al controlador correspondiente\n);\n\n/**\n * @route   GET /api/cursos/:cursoId/lecciones/:leccionId\n * @desc    Obtener el contenido detallado de una lección específica dentro de un curso.\n * @access  Public\n */\n\n/**\n * @route   PATCH /api/cursos/:cursoId/lecciones/:leccionId\n * @desc    Actualizar el estado de una lección (completada o no).\n * @access  Private (requiere autenticación del usuario)\n */\nrouter.route('/:cursoId/lecciones/:leccionId')\n  .get(\n    [\n      // Validaciones para los parámetros de la URL\n      param('cursoId', 'El ID del curso no es válido.').isMongoId(),\n      param('leccionId', 'El ID de la lección no es válido.').isMongoId()\n    ],\n    handleValidationErrors,\n    getLessonDetails // Controlador para obtener detalles de la lección\n  )\n  .patch(\n    [\n      // Validaciones para los parámetros de la URL\n      param('cursoId', 'El ID del curso no es válido.').isMongoId(),\n      param('leccionId', 'El ID de la lección no es válido.').isMongoId(),\n      // Validación para el cuerpo (body) de la solicitud\n      body('completado', 'El campo \\\"completado\\\" debe ser un valor booleano.').isBoolean()\n    ],\n    handleValidationErrors,\n    updateLessonStatus // Controlador para actualizar el estado de la lección\n  );\n\n// Se exporta el router para ser utilizado en el archivo principal del servidor (app.js o server.js)\nmodule.exports = router;\n",
+      "description": "Define las rutas RESTful para la gestión de cursos y lecciones. Incluye endpoints para obtener un curso por su ID, obtener los detalles de una lección específica y actualizar el estado de una lección. Implementa validación de datos de entrada para los parámetros de la URL y el cuerpo de la solicitud utilizando 'express-validator' y un manejo de errores centralizado para las validaciones."
+    }
+  ]
+}
+```

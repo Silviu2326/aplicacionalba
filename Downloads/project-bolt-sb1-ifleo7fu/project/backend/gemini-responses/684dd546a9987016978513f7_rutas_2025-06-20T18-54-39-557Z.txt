@@ -1,0 +1,14 @@
+Claro, aquí tienes el análisis y la generación de la estructura de rutas para Express.js basada en el archivo "Analytics" proporcionado, siguiendo todas tus especificaciones.
+
+```json
+{
+  "routes": [
+    {
+      "name": "AnalyticsRoutes",
+      "fileName": "analytics.routes.js",
+      "content": "const { Router } = require('express');\nconst { param, validationResult } = require('express-validator');\n\n// Importación hipotética de los controladores que contendrían la lógica de negocio.\nconst { \n  getCursosCreados,\n  getMetricasCurso\n} = require('../controllers/analytics.controller');\n\nconst router = Router();\n\n// Middleware para manejar los errores de validación de express-validator\nconst handleValidationErrors = (req, res, next) => {\n  const errors = validationResult(req);\n  if (!errors.isEmpty()) {\n    // Si hay errores, responde con un estado 400 (Bad Request) y la lista de errores.\n    return res.status(400).json({ \n      ok: false,\n      errors: errors.array()\n    });\n  }\n  next();\n};\n\n/**\n * @route   GET /api/analytics/cursos-creados\n * @desc    Obtener la lista completa de cursos con sus analíticas generales.\n * @access  Public (o Private si se implementa autenticación)\n */\nrouter.get('/cursos-creados', getCursosCreados);\n\n/**\n * @route   GET /api/analytics/cursos-creados/:cursoId\n * @desc    Obtener las métricas detalladas de un curso específico por su ID.\n * @access  Public (o Private si se implementa autenticación)\n * @param   {number} cursoId - El ID numérico del curso a consultar.\n */\nrouter.get('/cursos-creados/:cursoId', \n  // --- Middleware de Validación ---\n  [\n    // 1. Valida que el 'cursoId' proporcionado en la URL sea un número.\n    param('cursoId', 'El ID del curso debe ser un valor numérico.').isNumeric(),\n    \n    // 2. Middleware que procesa el resultado de las validaciones anteriores.\n    handleValidationErrors\n  ],\n  // --- Controlador ---\n  // Si la validación es exitosa, se ejecuta el controlador para obtener los datos.\n  getMetricasCurso\n);\n\n\nmodule.exports = router;\n",
+      "description": "Este archivo define las rutas para el API de analíticas. Se encarga de mapear los endpoints HTTP a los controladores correspondientes, incluyendo validaciones para los parámetros de entrada y siguiendo las mejores prácticas RESTful. Se basa en los métodos `obtenerCursosCreados` y `obtenerMetricasCurso` del archivo de frontend analizado."
+    }
+  ]
+}
+```

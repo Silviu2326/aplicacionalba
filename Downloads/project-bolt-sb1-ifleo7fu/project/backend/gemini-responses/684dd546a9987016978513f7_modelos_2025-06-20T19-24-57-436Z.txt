@@ -1,0 +1,43 @@
+Claro, aquí tienes el análisis de las entidades de datos y la generación de los modelos de Mongoose correspondientes, siguiendo la estructura solicitada.
+
+### Análisis de Entidades
+
+Al examinar el archivo de la API "Progreso", se pueden identificar las siguientes entidades de datos principales y sus relaciones:
+
+1.  **Progreso del Usuario (`ProgresoUsuario`)**: Es la entidad central que agrega todas las estadísticas generales de un usuario. Contiene datos como las horas totales de estudio, la racha, los puntos, y un registro de la actividad semanal. También gestiona la relación entre el usuario y los logros que ha obtenido o en los que está trabajando.
+2.  **Inscripción (`Inscripcion`)**: Representa la relación entre un `Usuario` y un `Curso`. Almacena datos específicos del progreso de un usuario en un curso particular, como el porcentaje de avance, la última actividad y la siguiente lección. Esto permite que la información del curso sea genérica, mientras que el progreso es específico del usuario.
+3.  **Curso (`Curso`)**: Es una entidad que contiene la información general y estática de un curso, como su título y descripción. Es referenciada por el modelo `Inscripcion`.
+4.  **Logro (`Logro`)**: Define qué es un logro o badge. Contiene su nombre, descripción, ícono y los criterios para obtenerlo. El progreso y la obtención de este logro por parte de un usuario se gestionan en el modelo `ProgresoUsuario`.
+
+A continuación se generan los modelos de Mongoose para estas entidades.
+
+```json
+{
+  "models": [
+    {
+      "name": "ProgresoUsuario",
+      "fileName": "progresoUsuario.model.js",
+      "content": "const mongoose = require('mongoose');\nconst Schema = mongoose.Schema;\n\n// Sub-esquema para la actividad diaria/semanal\nconst ActividadDiariaSchema = new Schema({\n  dia: {\n    type: String,\n    required: true,\n    enum: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] // Valida los días de la semana\n  },\n  horas: {\n    type: Number,\n    required: true,\n    min: [0, 'Las horas no pueden ser negativas']\n  }\n}, { _id: false });\n\n// Sub-esquema para los logros obtenidos por el usuario\nconst LogroObtenidoSchema = new Schema({\n  logro: {\n    type: Schema.Types.ObjectId,\n    ref: 'Logro', // Referencia al modelo de Logro\n    required: true\n  },\n  fechaObtencion: {\n    type: Date,\n    default: Date.now,\n    required: true\n  }\n}, { _id: false });\n\n// Esquema principal para el Progreso del Usuario\nconst ProgresoUsuarioSchema = new Schema({\n  usuario: {\n    type: Schema.Types.ObjectId,\n    ref: 'Usuario', // Asumiendo que existe un modelo 'Usuario'\n    required: true,\n    unique: true // Cada usuario solo debe tener un documento de progreso\n  },\n  resumen: {\n    horasEstudio: {\n      type: Number,\n      default: 0,\n      min: 0\n    },\n    minutosEstudiados: { // Más granular que horasEstudio\n        type: Number,\n        default: 0,\n        min: 0\n    },\n    rachaActual: {\n      type: Number,\n      default: 0,\n      min: 0\n    },\n    leccionesCompletadas: {\n      type: Number,\n      default: 0,\n      min: 0\n    },\n    puntosTotales: {\n      type: Number,\n      default: 0,\n      min: 0\n    },\n    nivelActual: {\n      type: Number,\n      default: 1,\n      min: 1\n    }\n  },\n  actividadSemanal: [ActividadDiariaSchema],\n  logros: [LogroObtenidoSchema]\n}, {\n  // Agrega automáticamente los campos createdAt y updatedAt\n  timestamps: true\n});\n\nmodule.exports = mongoose.model('ProgresoUsuario', ProgresoUsuarioSchema);",
+      "description": "Modela el progreso general y las estadísticas agregadas de un usuario en la plataforma. Centraliza métricas como la racha, horas de estudio y los logros obtenidos. Se relaciona 1 a 1 con un Usuario."
+    },
+    {
+      "name": "Inscripcion",
+      "fileName": "inscripcion.model.js",
+      "content": "const mongoose = require('mongoose');\nconst Schema = mongoose.Schema;\n\n// Esquema para la inscripción y progreso en un curso\nconst InscripcionSchema = new Schema({\n  usuario: {\n    type: Schema.Types.ObjectId,\n    ref: 'Usuario', // Referencia al modelo de Usuario\n    required: true\n  },\n  curso: {\n    type: Schema.Types.ObjectId,\n    ref: 'Curso', // Referencia al modelo de Curso\n    required: true\n  },\n  progreso: {\n    type: Number,\n    required: true,\n    min: [0, 'El progreso no puede ser menor que 0'],\n    max: [100, 'El progreso no puede ser mayor que 100'],\n    default: 0\n  },\n  siguienteLeccion: {\n    type: String,\n    trim: true\n  },\n  estado: {\n    type: String,\n    required: true,\n    enum: ['en-progreso', 'completado', 'no-iniciado'],\n    default: 'no-iniciado'\n  }\n}, {\n  // El campo updatedAt puede funcionar como 'ultimaActividad'\n  timestamps: true\n});\n\n// Se crea un índice compuesto para asegurar que un usuario solo pueda inscribirse una vez por curso\nInscripcionSchema.index({ usuario: 1, curso: 1 }, { unique: true });\n\nmodule.exports = mongoose.model('Inscripcion', InscripcionSchema);",
+      "description": "Modela la relación entre un Usuario y un Curso. Rastrea el progreso individual de un usuario en un curso específico, como el porcentaje completado y su estado actual (ej: en progreso, completado)."
+    },
+    {
+      "name": "Curso",
+      "fileName": "curso.model.js",
+      "content": "const mongoose = require('mongoose');\nconst Schema = mongoose.Schema;\n\n// Esquema para la entidad Curso\nconst CursoSchema = new Schema({\n  titulo: {\n    type: String,\n    required: [true, 'El título del curso es obligatorio'],\n    trim: true\n  },\n  descripcion: {\n    type: String,\n    required: [true, 'La descripción del curso es obligatoria'],\n    trim: true\n  },\n  // Podríamos agregar más detalles del curso si fuera necesario\n  // lecciones: [ { titulo: String, contenido: String, duracionMinutos: Number } ],\n  // nivel: { type: String, enum: ['principiante', 'intermedio', 'avanzado'] }\n}, {\n  timestamps: true\n});\n\nmodule.exports = mongoose.model('Curso', CursoSchema);",
+      "description": "Modela la entidad principal de un curso. Contiene información genérica y estática como el título y la descripción, que es la misma para todos los usuarios."
+    },
+    {
+      "name": "Logro",
+      "fileName": "logro.model.js",
+      "content": "const mongoose = require('mongoose');\nconst Schema = mongoose.Schema;\n\n// Esquema para la entidad Logro/Badge\nconst LogroSchema = new Schema({\n  nombre: {\n    type: String,\n    required: [true, 'El nombre del logro es obligatorio'],\n    unique: true,\n    trim: true\n  },\n  descripcion: {\n    type: String,\n    required: [true, 'La descripción del logro es obligatoria'],\n    trim: true\n  },\n  icono: {\n    type: String, // Podría ser una URL a una imagen o un emoji\n    required: true\n  },\n  // Criterios para desbloquear el logro\n  criterio: {\n    tipo: {\n        type: String,\n        required: true,\n        enum: ['CURSOS_COMPLETADOS', 'RACHA_DIAS', 'LECCIONES_COMPLETADAS']\n    },\n    valor: {\n        type: Number,\n        required: true\n    }\n  }\n}, {\n  timestamps: true\n});\n\nmodule.exports = mongoose.model('Logro', LogroSchema);",
+      "description": "Modela un logro o badge que los usuarios pueden obtener. Define las propiedades del logro como su nombre, descripción y el criterio necesario para desbloquearlo."
+    }
+  ]
+}
+```

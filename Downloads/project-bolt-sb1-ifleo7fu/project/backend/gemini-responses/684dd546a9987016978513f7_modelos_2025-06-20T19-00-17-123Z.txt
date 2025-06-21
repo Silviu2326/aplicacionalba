@@ -1,0 +1,25 @@
+Claro, aquí tienes el análisis del archivo y la generación de la estructura de `MODELS` para Express con Node.js y Mongoose, siguiendo las mejores prácticas y tus instrucciones.
+
+### Análisis de Entidades
+
+Al analizar los datos `mockCursosPublicos`, se identifican dos entidades de datos principales:
+
+1.  **Curso**: Es la entidad principal que contiene toda la información general del curso, como título, descripción, instructor, etc.
+2.  **Lección**: Es una entidad secundaria que representa cada una de las lecciones dentro del temario de un curso. Dado que las lecciones no tienen sentido sin un curso al que pertenecer, se modelarán como un **sub-documento** dentro del modelo `Curso`, en lugar de un modelo separado.
+
+Basado en este análisis, se generará un único archivo de modelo, `curso.model.js`, que contendrá el esquema para `Curso` y el sub-esquema para `Leccion`.
+
+### Resultado en Formato JSON
+
+```json
+{
+  "models": [
+    {
+      "name": "Curso",
+      "fileName": "curso.model.js",
+      "content": "const mongoose = require('mongoose');\nconst { Schema } = mongoose;\n\n// --- SUB-ESQUEMA PARA LAS LECCIONES DEL CURSO ---\n// Define la estructura de cada lección individual dentro del temario de un curso.\n// No se crea un modelo separado para Leccion porque su existencia está ligada\n// directamente a un curso. Se utiliza como un sub-documento anidado.\nconst leccionSchema = new Schema({\n  titulo: {\n    type: String,\n    required: [true, 'El título de la lección es obligatorio.'],\n    trim: true,\n  },\n  contenido: {\n    type: String,\n    required: [true, 'El contenido de la lección es obligatorio.'],\n  },\n  duracion: {\n    type: String,\n    required: [true, 'La duración de la lección es obligatoria.'],\n  },\n});\n\n// --- ESQUEMA PRINCIPAL PARA LOS CURSOS ---\n// Este esquema define la estructura completa de un documento de Curso en la base de datos,\n// incluyendo validaciones de datos para garantizar la integridad.\nconst cursoSchema = new Schema({\n  titulo: {\n    type: String,\n    required: [true, 'El título del curso es obligatorio.'],\n    trim: true,\n    unique: true, // Se asume que no deben existir cursos con el mismo título.\n  },\n  descripcion: {\n    type: String,\n    required: [true, 'La descripción del curso es obligatoria.'],\n  },\n  resumen: {\n    type: String,\n    required: [true, 'El resumen del curso es obligatorio.'],\n  },\n  instructor: {\n    type: String,\n    required: [true, 'El nombre del instructor es obligatorio.'],\n  },\n  categoria: {\n    type: String,\n    required: [true, 'La categoría del curso es obligatoria.'],\n  },\n  nivel: {\n    type: String,\n    required: [true, 'El nivel del curso es obligatorio.'],\n    enum: {\n      values: ['principiante', 'intermedio', 'avanzado'],\n      message: '{VALUE} no es un nivel válido. Valores permitidos: principiante, intermedio, avanzado.',\n    },\n  },\n  duracion: {\n    type: String,\n    required: [true, 'La duración total del curso es obligatoria.'],\n  },\n  rating: {\n    type: Number,\n    min: [0, 'El rating no puede ser menor que 0.'],\n    max: [5, 'El rating no puede ser mayor que 5.'],\n    default: 0,\n  },\n  estudiantes: {\n    type: Number,\n    min: [0, 'El número de estudiantes no puede ser negativo.'],\n    default: 0,\n  },\n  imagen: {\n    type: String,\n    required: [true, 'La URL de la imagen es obligatoria.'],\n  },\n  temas: {\n    type: [String], // Define un array de strings.\n    default: [],\n  },\n  esPublico: {\n    type: Boolean,\n    default: true, // Ideal para una API de 'ExplorarCursos'.\n  },\n  // Array de sub-documentos que utilizan el leccionSchema definido anteriormente.\n  temario: [leccionSchema],\n}, {\n  // Opciones del esquema:\n  // timestamps: true agrega automáticamente los campos 'createdAt' y 'updatedAt'.\n  timestamps: true,\n  // versionKey: false elimina el campo '__v' que Mongoose añade por defecto.\n  versionKey: false\n});\n\n// Se crea el Modelo 'Curso' a partir del esquema definido.\n// Mongoose nombrará la colección en la base de datos como 'cursos' (plural y en minúsculas).\nconst Curso = mongoose.model('Curso', cursoSchema);\n\n// Se exporta el modelo para que pueda ser utilizado en otras partes de la aplicación (ej. controladores).\nmodule.exports = Curso;\n",
+      "description": "Modelo principal para los cursos. Define la estructura de datos de un curso, incluyendo validaciones y un sub-esquema para las lecciones que componen el temario. Este modelo es la representación en la base de datos (MongoDB) de un curso de la plataforma."
+    }
+  ]
+}
+```

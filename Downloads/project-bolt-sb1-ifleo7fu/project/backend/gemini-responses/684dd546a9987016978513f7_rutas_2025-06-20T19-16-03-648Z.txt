@@ -1,0 +1,34 @@
+Claro, aquí tienes el análisis y la generación de la estructura de rutas para el API "Marketplace" en formato Express.js, siguiendo todas tus especificaciones.
+
+### Análisis del Archivo
+
+El archivo proporcionado describe una API para un marketplace de cursos. Del análisis se desprenden las siguientes entidades y operaciones potenciales:
+
+1.  **Cursos (`cursosMarketplace`)**: Es la entidad principal. Se pueden inferir las siguientes operaciones CRUD (Crear, Leer, Actualizar, Borrar) y de búsqueda:
+    *   `GET /cursos`: Obtener una lista de todos los cursos. La función `getCursosMarketplace` sugiere que esta ruta debería aceptar filtros como parámetros de consulta (query params), por ejemplo: `/cursos?categoria=Desarrollo%20Web&nivel=Intermedio`.
+    *   `GET /cursos/:id`: Obtener un curso específico por su ID.
+    *   `POST /cursos`: Crear un nuevo curso. Requerirá validación de los datos del cuerpo de la solicitud (body).
+    *   `PUT /cursos/:id`: Actualizar un curso existente por completo.
+    *   `PATCH /cursos/:id`: Actualizar parcialmente un curso existente.
+    *   `DELETE /cursos/:id`: Eliminar un curso.
+
+2.  **Historial (`historialAcciones`)**: Una entidad secundaria para registrar acciones.
+    *   `GET /historial`: Obtener el historial completo de acciones.
+    *   `POST /historial`: Registrar una nueva acción (esta podría ser una ruta interna o protegida, pero es una operación posible).
+
+Basado en este análisis, se generará un archivo de rutas que maneje estas operaciones de manera limpia, segura y siguiendo las mejores prácticas de Express y RESTful.
+
+### Resultado en Formato JSON
+
+```json
+{
+  "routes": [
+    {
+      "name": "MarketplaceRoutes",
+      "fileName": "marketplace.routes.js",
+      "content": "const { Router } = require('express');\nconst { check, validationResult } = require('express-validator');\n\n// Importamos los controladores (simulados para este ejemplo)\n// En una aplicación real, estos archivos contendrían la lógica de negocio.\nconst {\n  getCursos,\n  getCursoById,\n  createCurso,\n  updateCurso,\n  deleteCurso,\n  getHistorial\n} = require('../controllers/marketplace.controller');\n\nconst router = Router();\n\n// Middleware para manejar los errores de validación de express-validator\nconst handleValidationErrors = (req, res, next) => {\n  const errors = validationResult(req);\n  if (!errors.isEmpty()) {\n    return res.status(400).json({ errors: errors.array() });\n  }\n  next();\n};\n\n// --- Definición de Rutas para Cursos ---\n\n/**\n * @route   GET /api/marketplace/cursos\n * @desc    Obtener todos los cursos con opción de filtrado y paginación\n * @access  Public\n * @query   categoria, nivel, esGratis, esPremium, sortBy, order, page, limit\n */\nrouter.get('/cursos', getCursos);\n\n/**\n * @route   GET /api/marketplace/cursos/:id\n * @desc    Obtener un curso por su ID\n * @access  Public\n */\nrouter.get('/cursos/:id', getCursoById);\n\n/**\n * @route   POST /api/marketplace/cursos\n * @desc    Crear un nuevo curso\n * @access  Private (requeriría autenticación en un caso real)\n */\nrouter.post('/cursos', \n  [\n    // --- Middleware de Validación ---\n    check('titulo', 'El título es obligatorio').not().isEmpty(),\n    check('autor', 'El autor es obligatorio').not().isEmpty(),\n    check('categoria', 'La categoría es obligatoria').not().isEmpty(),\n    check('descripcion', 'La descripción es obligatoria').not().isEmpty(),\n    check('precio', 'El precio debe ser un valor numérico').isNumeric(),\n    check('esPremium', 'esPremium debe ser un valor booleano').isBoolean(),\n    check('esGratis', 'esGratis debe ser un valor booleano').isBoolean(),\n    check('nivel', 'El nivel es obligatorio (Principiante, Intermedio, Avanzado)').isIn(['Principiante', 'Intermedio', 'Avanzado'])\n  ],\n  handleValidationErrors, // Manejador de errores de validación\n  createCurso\n);\n\n/**\n * @route   PUT /api/marketplace/cursos/:id\n * @desc    Actualizar un curso existente\n * @access  Private (requeriría autenticación)\n */\nrouter.put('/cursos/:id', \n  [\n    // --- Middleware de Validación (similar a POST) ---\n    check('titulo', 'El título es obligatorio').not().isEmpty(),\n    check('autor', 'El autor es obligatorio').not().isEmpty(),\n    check('categoria', 'La categoría es obligatoria').not().isEmpty(),\n    check('descripcion', 'La descripción es obligatoria').not().isEmpty(),\n    check('precio', 'El precio debe ser un valor numérico').isNumeric(),\n    check('esPremium', 'esPremium debe ser un valor booleano').isBoolean(),\n    check('esGratis', 'esGratis debe ser un valor booleano').isBoolean(),\n    check('nivel', 'El nivel es obligatorio').isIn(['Principiante', 'Intermedio', 'Avanzado'])\n  ],\n  handleValidationErrors, // Reutilizamos el manejador\n  updateCurso\n);\n\n/**\n * @route   DELETE /api/marketplace/cursos/:id\n * @desc    Eliminar un curso por su ID\n * @access  Private (requeriría autenticación y autorización)\n */\nrouter.delete('/cursos/:id', deleteCurso);\n\n\n// --- Definición de Rutas para Historial ---\n\n/**\n * @route   GET /api/marketplace/historial\n * @desc    Obtener el historial de acciones\n * @access  Private (solo para administradores)\n */\nrouter.get('/historial', getHistorial);\n\n\n// --- Middleware de Manejo de Errores Global para estas rutas ---\n// Este middleware se colocaría al final de la carga de rutas en el archivo principal (app.js o server.js)\n// Se añade aquí como referencia conceptual.\n/*\n  app.use((err, req, res, next) => {\n    console.error(err.stack);\n    res.status(500).send({\n      status: 'error',\n      message: 'Ha ocurrido un error inesperado en el servidor.'\n    });\n  });\n*/\n\nmodule.exports = router;\n",
+      "description": "Archivo de rutas para la API del Marketplace. Define los endpoints para gestionar cursos y consultar el historial de acciones. Implementa el patrón RESTful, utiliza express-validator para la validación de datos en las rutas POST y PUT, y está estructurado para trabajar con controladores que contienen la lógica de negocio, promoviendo un código limpio y modular."
+    }
+  ]
+}
+```

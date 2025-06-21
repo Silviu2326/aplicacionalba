@@ -1,0 +1,32 @@
+Claro, aquí tienes el análisis y la generación de la estructura de rutas para Express.js basada en el archivo del "Tutor" proporcionado, siguiendo todas tus especificaciones.
+
+### **Análisis del Archivo de Cliente**
+
+1.  **Endpoint**: El cliente intenta conectarse a `POST /api/tutor/preguntar`. Esta será nuestra ruta principal.
+2.  **Método HTTP**: `POST`, ya que se está enviando nueva información (una pregunta) para ser procesada.
+3.  **Payload (Cuerpo de la Petición)**: El cliente envía un objeto JSON con la siguiente estructura:
+    *   `leccionId`: `string`
+    *   `pregunta`: `string`
+    *   `timestamp`: `string` (en formato ISO)
+4.  **Validación**: El cliente valida que la `pregunta` no esté vacía y no exceda los 500 caracteres. Esta validación **debe replicarse en el backend** como una medida de seguridad y consistencia.
+5.  **Autenticación**: El cliente envía un `Authorization: Bearer <token>`. Esto indica que la ruta debe estar protegida y requerirá un middleware de autenticación para verificar el token JWT.
+6.  **Manejo de Errores Esperado**:
+    *   `401 Unauthorized`: Si el token es inválido o ha expirado.
+    *   `429 Too Many Requests`: Implica la necesidad de un middleware de *rate limiting* para prevenir abusos.
+    *   `400 Bad Request`: Para datos de entrada inválidos (ej. pregunta vacía).
+7.  **Respuesta Exitosa (Success)**: Un objeto JSON con `respuesta` y `audioUrl`. El código de estado implícito es `200 OK`.
+
+Basado en este análisis, se genera el siguiente archivo de rutas.
+
+```json
+{
+  "routes": [
+    {
+      "name": "TutorRoutes",
+      "fileName": "tutor.routes.js",
+      "content": "const { Router } = require('express');\nconst { body, validationResult } = require('express-validator');\n\n// --- Importaciones de Controladores y Middlewares ---\n// Se asume que estos archivos existen en la estructura del proyecto.\n\n// Importar el controlador que manejará la lógica de la pregunta al tutor.\n// Este controlador contendrá la función async que procesa la pregunta y devuelve una respuesta.\nconst { askTutorController } = require('../controllers/tutor.controller');\n\n// Importar middlewares personalizados.\nconst { verifyToken } = require('../middlewares/auth.middleware'); // Middleware para verificar el token JWT.\nconst { tutorRateLimiter } = require('../middlewares/rateLimiter.middleware'); // Middleware para limitar la tasa de solicitudes.\n\n// Inicializar el router de Express.\nconst router = Router();\n\n// --- Definición de Middlewares de Validación ---\n// Usamos express-validator para sanear y validar el cuerpo de la petición.\n// Esto asegura que los datos que llegan al controlador son seguros y tienen el formato esperado.\nconst validateQuestionRequest = [\n  body('leccionId')\n    .trim()\n    .notEmpty().withMessage('El ID de la lección (leccionId) no puede estar vacío.')\n    .isString().withMessage('El ID de la lección debe ser una cadena de texto.'),\n\n  body('pregunta')\n    .trim()\n    .notEmpty().withMessage('La pregunta no puede estar vacía.')\n    .isLength({ min: 1, max: 500 }).withMessage('La pregunta debe tener entre 1 y 500 caracteres.'),\n\n  // Middleware para manejar los errores de validación.\n  (req, res, next) => {\n    const errors = validationResult(req);\n    if (!errors.isEmpty()) {\n      // Si hay errores de validación, se responde con un código 400 (Bad Request)\n      // y un array con los errores encontrados.\n      return res.status(400).json({ errors: errors.array() });\n    }\n    next(); // Si no hay errores, se continúa con el siguiente middleware o el controlador.\n  }\n];\n\n// --- Definición de Rutas ---\n\n/**\n * @route   POST /api/tutor/preguntar\n * @desc    Recibe una pregunta del usuario para el tutor IA, la procesa y devuelve una respuesta.\n * @access  Private (requiere autenticación por token)\n */\nrouter.post(\n  '/preguntar',\n  [\n    // 1. Middleware de Autenticación: Verifica si el token JWT en la cabecera 'Authorization' es válido.\n    // Si no es válido, la petición se rechaza con un 401 Unauthorized y no continúa.\n    verifyToken,\n\n    // 2. Middleware de Rate Limiting: Limita el número de peticiones que un usuario puede hacer\n    // en un periodo de tiempo para prevenir abusos. Si se excede, devuelve 429 Too Many Requests.\n    tutorRateLimiter,\n\n    // 3. Cadena de Middlewares de Validación: Ejecuta las validaciones definidas arriba para\n    // el cuerpo de la petición. Si falla, devuelve un 400 Bad Request.\n    ...validateQuestionRequest\n  ],\n  // 4. Controlador: Si todos los middlewares anteriores pasan, la petición finalmente llega\n  // al controlador `askTutorController`, que contiene la lógica de negocio principal.\n  // Se usa async/await dentro del controlador para manejar operaciones asíncronas.\n  askTutorController\n);\n\n// Exportar el router para ser utilizado en el archivo principal de la aplicación (ej. app.js o server.js)\nmodule.exports = router;\n",
+      "description": "Este archivo define las rutas para la API del 'Tutor'. Incluye un endpoint principal `POST /api/tutor/preguntar` que está protegido y validado. Se encarga de recibir las preguntas de los usuarios, aplicar middlewares de autenticación, limitación de tasa y validación de datos antes de pasar la solicitud al controlador correspondiente para ser procesada."
+    }
+  ]
+}
+```

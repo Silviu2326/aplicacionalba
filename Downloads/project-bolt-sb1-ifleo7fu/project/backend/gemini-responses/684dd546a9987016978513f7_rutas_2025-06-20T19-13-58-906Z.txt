@@ -1,0 +1,27 @@
+Claro, aquí tienes el análisis del archivo "Laboratorio" y la generación de la estructura de rutas para Express.js, siguiendo las mejores prácticas y los requisitos especificados.
+
+### Análisis del API "Laboratorio"
+
+El archivo proporcionado describe una API simple para una plataforma de aprendizaje interactivo. A partir de su contenido, se pueden deducir los siguientes endpoints necesarios:
+
+1.  **Obtener Ejercicios por Lección**: El fragmento `fetch('/api/laboratorio/ejercicios?leccion=${leccionId}')` indica claramente la necesidad de una ruta `GET` que filtre los ejercicios basándose en un parámetro de consulta (`query param`) `leccion`.
+2.  **Obtener un Ejercicio Específico**: Para que un usuario pueda trabajar en un ejercicio concreto, es una práctica RESTful estándar tener un endpoint para obtener un solo recurso. Esto implicaría una ruta como `GET /ejercicios/:leccionId/:ejercicioId`.
+3.  **Enviar una Solución**: El propósito del laboratorio es que los usuarios envíen sus respuestas. Esto se traduce en una ruta `POST` para enviar la solución de un ejercicio específico. La ruta incluiría el ID de la lección y del ejercicio, y la solución se enviaría en el cuerpo (`body`) de la solicitud.
+4.  **Ver Historial de Intentos**: La variable `historialIntentos` sugiere que debe haber una forma de consultar este historial, lo que lleva a una ruta `GET /historial`.
+
+Basado en este análisis, se genera el siguiente archivo de rutas.
+
+### Resultado en Formato JSON
+
+```json
+{
+  "routes": [
+    {
+      "name": "LaboratorioRoutes",
+      "fileName": "laboratorio.routes.js",
+      "content": "import { Router } from 'express';\nimport { body, query, param, validationResult } from 'express-validator';\n\n// NOTA: Se asume que las funciones del controlador están en '../controllers/laboratorio.controller.js'\n// y que manejan la lógica de negocio (consultar datos, validar soluciones, etc.) y los errores asíncronos.\nimport {\n  obtenerEjerciciosPorLeccion,\n  obtenerEjercicioEspecifico,\n  enviarSolucionEjercicio,\n  obtenerHistorialIntentos\n} from '../controllers/laboratorio.controller.js';\n\nconst router = Router();\n\n// Middleware reutilizable para manejar errores de validación de express-validator\nconst manejarErroresValidacion = (req, res, next) => {\n  const errors = validationResult(req);\n  if (!errors.isEmpty()) {\n    // Si hay errores de validación, responde con un código 400 (Bad Request)\n    return res.status(400).json({ errors: errors.array() });\n  }\n  next();\n};\n\n// ------------------ Definición de Rutas para el Laboratorio ------------------\n\n/**\n * @route   GET /api/laboratorio/ejercicios\n * @desc    Obtiene la lista de ejercicios para una lección específica.\n * @access  Public\n * @query   leccion - El ID numérico de la lección es obligatorio.\n */\nrouter.get(\n  '/ejercicios',\n  [\n    // Regla de validación: el query param 'leccion' debe existir y ser un número.\n    query('leccion', 'El parámetro de consulta \\\"leccion\\\" es requerido y debe ser numérico')\n      .exists()\n      .isNumeric(),\n  ],\n  manejarErroresValidacion,\n  obtenerEjerciciosPorLeccion // El controlador se encarga de la lógica y la respuesta\n);\n\n/**\n * @route   GET /api/laboratorio/ejercicios/:leccionId/:ejercicioId\n * @desc    Obtiene un ejercicio específico por su ID y el de su lección.\n * @access  Public\n * @param   leccionId - El ID numérico de la lección.\n * @param   ejercicioId - El ID alfanumérico del ejercicio (ej. \"ej1\").\n */\nrouter.get(\n  '/ejercicios/:leccionId/:ejercicioId',\n  [\n    // Reglas de validación para los parámetros de la URL\n    param('leccionId', 'El ID de la lección en la URL debe ser numérico').isNumeric(),\n    param('ejercicioId', 'El ID del ejercicio en la URL es requerido').not().isEmpty().isString(),\n  ],\n  manejarErroresValidacion,\n  obtenerEjercicioEspecifico\n);\n\n/**\n * @route   POST /api/laboratorio/ejercicios/:leccionId/:ejercicioId/submit\n * @desc    Envía una solución para un ejercicio y recibe el resultado de la validación.\n * @access  Public\n * @body    { \"solucion\": { ... } } - Objeto que contiene la respuesta del usuario.\n */\nrouter.post(\n  '/ejercicios/:leccionId/:ejercicioId/submit',\n  [\n    // Validación de parámetros de URL\n    param('leccionId', 'El ID de la lección en la URL debe ser numérico').isNumeric(),\n    param('ejercicioId', 'El ID del ejercicio en la URL es requerido').not().isEmpty().isString(),\n    // Validación del cuerpo de la solicitud\n    body('solucion', 'El objeto \\\"solucion\\\" en el cuerpo es requerido y no debe estar vacío').isObject({ strict: false }).notEmpty(),\n  ],\n  manejarErroresValidacion,\n  enviarSolucionEjercicio\n);\n\n/**\n * @route   GET /api/laboratorio/historial\n * @desc    Obtiene el historial de todos los intentos de solución.\n * @access  Public (en un caso real, debería ser privado y por usuario).\n */\nrouter.get(\n  '/historial',\n  obtenerHistorialIntentos\n);\n\nexport default router;\n",
+      "description": "Este archivo define las rutas RESTful para el API del Laboratorio. Utiliza express.Router para modularizar las rutas. Incluye validación de entradas (parámetros de ruta, queries y cuerpo de la solicitud) usando 'express-validator'. Las rutas están diseñadas para obtener listas de ejercicios, obtener un ejercicio específico, enviar soluciones y consultar el historial de intentos, delegando la lógica de negocio a los controladores correspondientes."
+    }
+  ]
+}
+```

@@ -1,0 +1,29 @@
+Claro, aquí tienes el análisis del archivo "GeneradorTemario" y la generación de la estructura de `MODELS` para Express con Node.js y Mongoose, siguiendo todas tus especificaciones.
+
+### Análisis de la Entidad de Datos
+
+El archivo `GeneradorTemario` manipula una entidad principal que podemos llamar **"Temario"** o, de forma más general, **"Curso"**, ya que contiene no solo el temario sino también metadatos como título, nivel, duración y objetivos.
+
+Esta entidad principal (`Curso`) tiene una estructura jerárquica:
+1.  **Curso**: El nivel más alto, que contiene propiedades generales.
+2.  **Bloque**: Un curso se divide en varios `bloques` (o módulos). Cada bloque tiene un título.
+3.  **Lección**: Cada bloque se compone de varias `lecciones`. Cada lección tiene un título.
+
+Basado en este análisis, la estructura de datos ideal en MongoDB sería un único documento (`Curso`) que contenga un array de subdocumentos (`bloques`), los cuales a su vez contienen un array de subdocumentos (`lecciones`). Este enfoque mantiene la integridad de un temario completo dentro de un solo registro de la base de datos.
+
+Se creará un único modelo llamado `Curso` para representar esta estructura.
+
+### Resultado en Formato JSON
+
+```json
+{
+  "models": [
+    {
+      "name": "Curso",
+      "fileName": "curso.model.js",
+      "content": "const mongoose = require('mongoose');\nconst { Schema } = mongoose;\n\n// ---- SUB-ESQUEMAS ANIDADOS ----\n\n/**\n * @description Esquema para las lecciones individuales dentro de un bloque.\n * No se crea un modelo separado para Leccion, ya que siempre existirá en el contexto de un Bloque.\n * Mongoose generará automáticamente un `_id` único para cada lección.\n */\nconst LeccionSchema = new Schema({\n  titulo: {\n    type: String,\n    required: [true, 'El título de la lección es obligatorio.'],\n    trim: true,\n    minlength: [3, 'El título de la lección debe tener al menos 3 caracteres.']\n  }\n});\n\n/**\n * @description Esquema para los bloques temáticos que componen el curso.\n * Cada bloque contiene un conjunto de lecciones.\n * No se crea un modelo separado para Bloque, ya que es un subdocumento de Curso.\n */\nconst BloqueSchema = new Schema({\n  titulo: {\n    type: String,\n    required: [true, 'El título del bloque es obligatorio.'],\n    trim: true,\n    minlength: [5, 'El título del bloque debe tener al menos 5 caracteres.']\n  },\n  lecciones: {\n    type: [LeccionSchema], // Array de subdocumentos de Leccion\n    validate: [v => Array.isArray(v) && v.length > 0, 'Cada bloque debe tener al menos una lección.']\n  }\n});\n\n\n// ---- ESQUEMA PRINCIPAL ----\n\n/**\n * @description Esquema principal para el modelo de Curso/Temario.\n * Representa la estructura completa de un curso generado, incluyendo metadatos y el contenido jerárquico.\n */\nconst CursoSchema = new Schema({\n  titulo: {\n    type: String,\n    required: [true, 'El título del curso es obligatorio.'],\n    trim: true\n  },\n  tema: {\n    type: String,\n    required: [true, 'El tema del curso es obligatorio.'],\n    trim: true\n  },\n  nivel: {\n    type: String,\n    required: [true, 'El nivel del curso es obligatorio.'],\n    enum: {\n      values: ['principiante', 'intermedio', 'avanzado'], // Valores permitidos\n      message: 'El nivel \"{VALUE}\" no es válido. Valores permitidos: principiante, intermedio, avanzado.'\n    }\n  },\n  duracion: {\n    type: String,\n    required: [true, 'La duración es obligatoria.'],\n    trim: true\n  },\n  enfoque: {\n    type: String,\n    required: [true, 'El enfoque es obligatorio.'],\n    trim: true\n  },\n  objetivos: {\n    type: [String], // Un array de strings\n    required: true,\n    // Validación para asegurar que el array de objetivos no esté vacío.\n    validate: [v => Array.isArray(v) && v.length > 0, 'Se debe especificar al menos un objetivo.']\n  },\n  bloques: {\n    type: [BloqueSchema], // Array de subdocumentos de Bloque\n    required: true,\n    validate: [v => Array.isArray(v) && v.length > 0, 'El curso debe tener al menos un bloque temático.']\n  }\n}, {\n  // Opciones del esquema:\n  // `timestamps: true` agrega automáticamente los campos `createdAt` y `updatedAt`.\n  timestamps: true,\n  // `versionKey: false` deshabilita el campo `__v` que usa Mongoose para versionado interno.\n  versionKey: false\n});\n\n/**\n * @description Modelo de Mongoose para la colección 'cursos'.\n * Utiliza el CursoSchema para definir la estructura de los documentos.\n * Las operaciones de base de datos (crear, leer, actualizar, borrar) se realizarán a través de este modelo.\n */\nconst Curso = mongoose.model('Curso', CursoSchema);\n\nmodule.exports = Curso;\n",
+      "description": "Modelo de Mongoose para la entidad 'Curso'. Este modelo define la estructura completa de un temario, incluyendo metadatos como título, nivel y duración, así como una estructura jerárquica de 'bloques' y 'lecciones'. Incluye validaciones de datos para garantizar la integridad de la información y utiliza sub-esquemas para organizar el contenido anidado. Está diseñado para ser almacenado en una colección de MongoDB."
+    }
+  ]
+}
+```
