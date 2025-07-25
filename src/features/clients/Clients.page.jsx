@@ -36,8 +36,8 @@ const ClientsPage = () => {
     },
     {
       id: 3,
-      name: 'Ana Martín',
-      email: 'ana.martin@email.com',
+      name: 'Alba Martín',
+      email: 'alba.martin@email.com',
       phone: '+34 600 987 654',
       status: 'inactive',
       joinDate: '2023-11-20',

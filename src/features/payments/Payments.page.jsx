@@ -34,8 +34,8 @@ const PaymentsPage = () => {
     },
     {
       id: 3,
-      clientName: 'Ana Martín',
-      clientEmail: 'ana.martin@email.com',
+      clientName: 'Alba Martín',
+      clientEmail: 'alba.martin@email.com',
       amount: 60,
       service: 'Sesión Individual',
       status: 'overdue',

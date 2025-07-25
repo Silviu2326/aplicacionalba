@@ -14,7 +14,7 @@ const DashboardPage = () => {
   const recentClients = [
     { name: 'María López', lastSession: '2 días', progress: '+5kg' },
     { name: 'Carlos Ruiz', lastSession: '1 día', progress: '-3kg' },
-    { name: 'Ana Martín', lastSession: '3 días', progress: '+2kg' },
+    { name: 'Alba Martín', lastSession: '3 días', progress: '+2kg' },
   ];
 
   return (
@@ -128,7 +128,7 @@ const DashboardPage = () => {
             <div className="glass-mid p-4 border border-amber-500/20 bg-amber-500/5 hover:glass transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-neutral-900">Ana Martín</p>
+                  <p className="font-semibold text-neutral-900">Alba Martín</p>
                   <p className="text-sm text-amber-600 font-medium">4:00 PM - Evaluación nutricional</p>
                 </div>
                 <Apple size={24} className="text-amber-600" />

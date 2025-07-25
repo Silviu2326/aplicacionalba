@@ -11,7 +11,7 @@ export const login = async (credentials) => {
     
     // Usuario de prueba
     const testUser = {
-      email: 'ana@fitcoach.com',
+      email: 'alba@fitcoach.com',
       password: '123456'
     };
     
@@ -21,7 +21,7 @@ export const login = async (credentials) => {
         success: true,
         user: {
           id: 1,
-          name: 'Ana García',
+          name: 'Alba García',
           email: credentials.email,
           role: 'trainer',
           avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',

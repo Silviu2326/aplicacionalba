@@ -6,7 +6,7 @@ import Card from '../../components/Card';
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: 'ana@fitcoach.com',
+    email: 'alba@fitcoach.com',
     password: '123456'
   });
   const [isLogin, setIsLogin] = useState(true);
@@ -74,7 +74,7 @@ const LoginPage = () => {
                 <span className="text-xl">👋</span> Usuario de Prueba
               </h3>
               <div className="text-sm text-neutral-700 dark:text-neutral-300 space-y-2">
-                <p><strong className="text-brand">Email:</strong> ana@fitcoach.com</p>
+                <p><strong className="text-brand">Email:</strong> alba@fitcoach.com</p>
                 <p><strong className="text-brand">Contraseña:</strong> 123456</p>
                 <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-3 italic">Los campos ya están pre-rellenados para tu comodidad</p>
               </div>
